@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+qa/
+.cache/
+dist/vendor/
+tests/fixtures/portrait.jpg
+*.zip

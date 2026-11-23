@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="用普通摄像头，探索目光与屏幕之间的距离。所有画面在本机处理。">
+  <title>目光 · Gaze Lab</title>
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="目光实验室首页"><img src="./icon.svg" alt="" width="35" height="35"><span>目光<span class="brand-en">GAZE LAB</span></span></a>
+    <div class="header-note"><span class="local-light"></span> 本地运行 · 画面留在你的电脑</div>
+    <span class="version-tag">EXPERIMENT 001 · V1.4.1</span>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div><p class="eyebrow">把一个想法，变成一次实验</p><h1>看看你的目光，<br>落在屏幕的哪里<span class="accent">。</span></h1></div>
+      <p class="intro-copy">用普通摄像头观察目光落点。<br>连接后可直接全屏追踪，也可校准和测量误差。</p>
+    </section>
+
+    <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+
+    <section class="device-panel" aria-labelledby="deviceTitle">
+      <div class="device-heading"><div><h2 id="deviceTitle">屏幕与摄像头位置</h2><p id="deviceStatus" role="status">当前使用估算尺寸。读取本机设备可获取 Windows 识别的屏幕尺寸和分辨率。</p></div><button id="readDeviceBtn" class="button secondary">读取本机设备</button></div>
+      <div class="device-fields" id="deviceFields">
+        <label id="displayPicker" hidden>追踪所用屏幕<select id="displayChoice"></select></label>
+        <label>屏幕尺寸来源<select id="sizeSource"><option value="estimated">估算屏幕尺寸</option><option id="detectedSize" value="detected" disabled>系统读取</option><option value="manual">手动输入</option></select></label>
+        <div id="manualSize" class="device-pair" hidden><label>屏宽（cm）<input id="screenWidthCm" type="number" min="5" max="300" step="any" inputmode="decimal"></label><label>屏高（cm）<input id="screenHeightCm" type="number" min="5" max="300" step="any" inputmode="decimal"></label></div>
+        <label>摄像头物理位置<select id="cameraPlacement"><option value="top">上边居中（高出 1.5 cm）</option><option value="bottom">下边居中（低于 1.5 cm）</option><option value="custom">手动输入</option></select></label>
+        <div id="manualCamera" class="device-pair" hidden><label>从屏幕左缘向右 X（cm）<input id="cameraXCm" type="number" step="any" inputmode="decimal"></label><label>从屏幕上缘向下 Y（cm）<input id="cameraYCm" type="number" step="any" inputmode="decimal"></label></div>
+      </div>
+      <p class="device-summary" id="deviceSummary"></p>
+    </section>
+
+    <section class="workspace" aria-label="视线实验控制台">
+      <div class="experiment-panel">
+        <div class="panel-top"><span class="eyebrow">YOUR EXPERIMENT</span><span id="stageBadge" class="pill">等待开始</span></div>
+        <div id="landingArt" class="landing-art">
+          <div class="art-grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="eye-art" aria-hidden="true"><svg viewBox="0 0 400 230"><path d="M28 115Q200-45 372 115Q200 275 28 115Z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="200" cy="115" r="68" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="200" cy="115" r="46" fill="none" stroke="currentColor" stroke-width="1" opacity=".35"/><circle cx="200" cy="115" r="20" fill="currentColor"/><circle cx="212" cy="103" r="6" fill="#f5f5ed"/></svg><span class="orbit-dot"></span></div>
+          <p id="artTitle">让目光成为一种输入</p><span id="artSubtitle">先了解它的精度，再探索它的用途。</span>
+          <div class="art-coordinates">x — —<span>y — —</span></div>
+        </div>
+
+        <div class="steps" aria-label="实验步骤">
+          <div class="step" data-step="camera"><span class="step-num">01</span><div><strong>连接摄像头</strong><small>保持光线均匀，双眼清晰可见</small></div><span class="step-mark">↗</span></div>
+          <div class="step" data-step="calibration"><span class="step-num">02</span><div><strong id="calibrationStepTitle">全屏追踪</strong><small id="calibrationStepHint">连接后直接使用，可选个人校准</small></div><span class="step-mark">↗</span></div>
+          <div class="step" data-step="validation"><span class="step-num">03</span><div><strong>测出实际误差</strong><small>比较坐稳与轻微移动时的表现</small></div><span class="step-mark">↗</span></div>
+        </div>
+        <div class="mode-choice"><label for="trackingMode">追踪模式</label><select id="trackingMode"><option value="natural">自然移动 · 实验</option><option value="precision">坐稳精细 · 原有 16 点模型</option></select><p>自然移动根据面部大小和姿态实时调整视线起点。</p><div id="modelFallback" hidden><span id="modelFallbackText"></span><button id="fallbackBtn" class="text-button">切换坐稳精细模式 →</button></div></div>
+        <div class="main-actions"><button id="practiceBtn" class="button primary" disabled>全屏追踪 <span>↗</span></button><button id="calibrateBtn" class="button secondary" disabled>开始校准 <span>↗</span></button></div>
+        <div class="motion-choice"><label for="calibrationCount">个人校准点数</label><select id="calibrationCount"><option value="9">9 点 · 约 29 秒</option><option value="16">16 点 · 约 50 秒</option></select></div>
+        <div class="motion-choice" id="distanceControl"><span id="distanceCalibrationStatus">先做个人校准</span><button id="distanceCalibrateBtn" class="button small secondary" disabled>近／远补充校准 · 约 20 秒</button></div>
+        <div class="motion-choice"><label for="testCount">独立测试点数</label><select id="testCount"><option value="9">9 点 · 约 27 秒</option><option value="16">16 点 · 约 48 秒</option></select></div>
+        <div class="motion-choice"><label for="motionKind">移动测试动作</label><select id="motionKind"><option value="distance">靠近 / 后退</option><option value="yaw">左右转头</option><option value="pitch">抬头 / 低头</option><option value="lateral">左右平移</option><option value="roll">向两侧歪头</option></select></div>
+        <div class="test-actions"><button id="baselineBtn" class="text-button" disabled>坐稳测试 <span>约 27 秒 →</span></button><button id="motionBtn" class="text-button" disabled>轻微移动测试 <span>约 27 秒 →</span></button></div>
+      </div>
+
+      <aside class="camera-panel">
+        <div class="camera-heading"><span class="eyebrow">CAMERA PREVIEW</span><span id="cameraState" class="camera-state">未连接</span></div>
+        <div id="previewSlot" class="preview-slot">
+          <div id="cameraPlaceholder" class="camera-placeholder"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="9" y="19" width="46" height="32" rx="7"/><path d="M20 19l4-7h16l4 7"/><circle cx="32" cy="35" r="9"/></svg><p>从看见你开始</p><span>点击下方按钮连接摄像头</span></div>
+        </div>
+        <div class="camera-readouts"><span><i id="faceLight" class="status-light"></i><span id="faceStatus">等待摄像头</span></span><span id="frameRate">— Hz</span></div>
+        <p id="cameraProfile" class="camera-profile">连接后显示摄像头采集参数。</p>
+        <div id="poseReadouts" class="pose-readouts"><span>相对参考坐姿 · 估计值</span><dl><div><dt>距离倍数</dt><dd id="poseDistance">—</dd></div><div><dt>左右转头</dt><dd id="poseYaw">—</dd></div><div><dt>抬低头</dt><dd id="posePitch">—</dd></div><div><dt>歪头</dt><dd id="poseRoll">—</dd></div></dl></div>
+        <button id="connectBtn" class="button camera-connect">连接摄像头 <span>↗</span></button>
+        <button id="stopBtn" class="stop-button" disabled>停止并释放摄像头</button>
+        <div class="camera-advice"><strong>给目光一个稳定的起点</strong><p>摄像头靠近屏幕上沿，保持舒适坐姿。尽量避免背光和镜片反光。</p></div>
+        <label class="notes-label" for="conditions">记录本次条件 <span>选填</span></label><textarea id="conditions" rows="2" maxlength="500" placeholder="例如：戴眼镜、台灯照明、距离约一臂"></textarea>
+      </aside>
+    </section>
+
+    <section class="results-section" aria-labelledby="resultsTitle">
+      <div class="section-heading"><div><p class="eyebrow">MEASURE, THEN EXPLORE</p><h2 id="resultsTitle">每一次注视，都有迹可循。</h2></div><div class="export-actions"><button id="exportCsvBtn" class="button small secondary" disabled>导出 CSV ↓</button><button id="exportJsonBtn" class="button small secondary" disabled>导出 JSON ↓</button></div></div>
+      <p id="resultContext" class="result-context">完成一次独立测试后，这里会显示测量结果。</p>
+      <p class="export-note">数据保存在当前页面，刷新或关闭前请先导出。</p>
+      <div id="resultsEmpty" class="results-empty"><span class="empty-cross">＋</span><p>精度不用猜，让实验告诉你。</p><span>中位误差 · 九宫格命中率 · 注视抖动 · 有效预测</span></div>
+      <div id="resultsContent" hidden>
+        <div class="metric-cards"><div><span>中位误差</span><strong id="metricMedian">—</strong><small id="metricMedianPct">—</small></div><div><span>九宫格命中率</span><strong id="metricGrid">—</strong><small>有效预测中，落在同一区域的比例</small></div><div><span>注视抖动</span><strong id="metricJitter">—</strong><small>同一目标内的坐标离散程度</small></div><div><span>有效预测比例</span><strong id="metricValid">—</strong><small id="metricHz">—</small></div></div>
+        <p id="compensationComparison" class="compensation-comparison" hidden></p>
+        <p id="distanceComparison" class="compensation-comparison" hidden></p>
+        <div class="result-detail"><div class="plot-panel"><div class="plot-heading"><span>目标与预测的距离</span><select id="plotCondition" aria-label="选择结果图"></select></div><canvas id="resultPlot" aria-label="目标位置与估算注视位置散点图"></canvas><div class="plot-legend"><span><i class="target-key"></i>目标</span><span><i class="prediction-key"></i>平均预测</span><span>淡点为逐次预测</span></div></div><div class="comparison-panel"><h3>两种状态，放在一起看。</h3><div class="table-scroll"><table><thead><tr><th>测量指标</th><th>坐稳</th><th>轻微移动</th></tr></thead><tbody id="comparisonBody"></tbody></table></div><p id="resultQuality" class="quality-note"></p></div></div>
+      </div>
+      <details class="method-notes"><summary>这些数字说明了什么？</summary><div><p><strong>误差</strong>是预测位置与要求注视的目标之间的距离，单位为 CSS 像素；百分比以测试窗口对角线为基准。90% 分位误差表示 90% 的有效预测没有超过该距离。</p><p><strong>抖动</strong>是在每个目标内，以预测均值为中心计算的均方根距离。圆点平滑只用于自由观察，正式统计使用原始预测，越界位置也计入误差。</p><p><strong>有效预测比例</strong>是采集阶段收到的不同相机帧推理回调中，虹膜特征与坐标均有效的比例；它不是摄像头帧覆盖率。闭眼、眼部过小或虹膜不可靠时会跳过预测，因此应结合误差、预测频率及每个目标的数据量一起看。检测通过仍不能证明你确实注视了目标。</p><p>这是普通摄像头与当前算法的探索性测试。目标位置是你配合注视的参考位置，结果只代表这套设备、算法及当时条件。</p></div></details>
+    </section>
+    <footer><span>目光 / GAZE LAB</span><span>从一次注视，探索一种新的交互。</span><a href="./vendor/WEBGAZER-LICENSE.md" target="_blank" rel="noopener">开源许可</a></footer>
+  </main>
+
+  <div id="protocolOverlay" class="protocol-overlay" hidden>
+    <div class="protocol-grid" aria-hidden="true"></div>
+    <div class="protocol-top"><span class="protocol-brand">目光 <span>GAZE LAB</span></span><div><strong id="protocolLabel">16点精细校准</strong><span id="protocolCounter">1 / 16</span></div><div class="protocol-controls"><button id="overlayTestBtn" class="button small primary" hidden>开始坐稳测试</button><button id="overlayExitBtn" class="button small secondary">结束本轮</button></div></div>
+    <div id="targetDot" class="target-dot" aria-label="请注视此圆点"><span></span></div>
+    <div id="gazeDot" class="gaze-dot" hidden aria-hidden="true"></div>
+    <div class="protocol-bottom"><p id="protocolInstruction">保持头部坐稳，注视圆点中心。</p><span id="protocolStatus">准备采集</span><div class="progress-track"><div id="protocolProgress"></div></div><small>按 Esc 返回控制台</small></div>
+  </div>
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>

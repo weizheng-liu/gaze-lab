@@ -1,0 +1,4 @@
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #142422; }
+#webgazerVideoContainer { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; }
+#webgazerVideoFeed { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; object-fit: cover; }
+#webgazerGazeDot, #webgazerFaceOverlay, #webgazerFaceFeedbackBox { display: none !important; }
